@@ -84,4 +84,3 @@ The `User Interface` class handles interactions with the user, providing menus a
 
 ---
 
-This file provides a clear roadmap of the system’s design, ensuring readability and easy navigation for users working with the code.
