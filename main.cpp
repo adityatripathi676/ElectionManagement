@@ -1,105 +1,136 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
 
-#define MAX_CANDIDATES 100
-#define NAME_LENGTH 50
+class Person {
+protected:
+    string name;
+public:
+    Person(const string& name) : name(name) {}
+    virtual ~Person() {}
+    string getName() const {
+        return name;
+    }
+};
 
-// Structure to represent a candidate
-typedef struct {
-    int id;
-    char name[NAME_LENGTH];
+class Candidate : public Person {
+private:
     int votes;
-} Candidate;
+public:
+    Candidate(const string& name) : Person(name), votes(0) {}
+    void addVote() {
+        votes++;
+    }
+    int getVotes() const {
+        return votes;
+    }
+};
 
-// Function prototypes
-void addCandidate(Candidate candidates[], int *count);
-void displayCandidates(Candidate candidates[], int count);
-void castVote(Candidate candidates[], int count);
+class Voter : public Person {
+private:
+    bool hasVoted;
+public:
+    Voter(const string& name) : Person(name), hasVoted(false) {}
+    bool hasVotedStatus() const {
+        return hasVoted;
+    }
+    void vote() {
+        hasVoted = true;
+    }
+};
+
+class ElectionManager {
+private:
+    vector<Candidate> candidates;
+    vector<Voter> voters;
+public:
+    void addCandidate(const string& name) {
+        candidates.emplace_back(name);
+        cout << "Candidate " << name << " added.\n";
+    }
+    void addVoter(const string& name) {
+        voters.emplace_back(name);
+        cout << "Voter " << name << " added.\n";
+    }
+    bool vote(const string& voterName, const string& candidateName) {
+        for (auto& voter : voters) {
+            if (voter.getName() == voterName) {
+                if (voter.hasVotedStatus()) {
+                    cout << "Voter has already voted.\n";
+                    return false;
+                }
+                voter.vote();
+                for (auto& candidate : candidates) {
+                    if (candidate.getName() == candidateName) {
+                        candidate.addVote();
+                        cout << voterName << " voted for " << candidateName << ".\n";
+                        return true;
+                    }
+                }
+                cout << "Candidate not found.\n";
+                return false;
+            }
+        }
+        cout << "Voter not found.\n";
+        return false;
+    }
+    void showResults() const {
+        cout << "Election Results:\n";
+        for (const auto& candidate : candidates) {
+            cout << candidate.getName() << ": " << candidate.getVotes() << " votes\n";
+        }
+    }
+    void displayMenu() const {
+        cout << "\n--- Election Management System ---\n";
+        cout << "1. Add Candidate\n";
+        cout << "2. Add Voter\n";
+        cout << "3. Vote\n";
+        cout << "4. Show Results\n";
+        cout << "5. Exit\n";
+    }
+};
 
 int main() {
-    Candidate candidates[MAX_CANDIDATES];
-    int candidateCount = 0;
+    ElectionManager electionManager;
     int choice;
-
     do {
-        printf("\n--- Election Management System ---\n");
-        printf("1. Add Candidate\n");
-        printf("2. Display Candidates\n");
-        printf("3. Cast Vote\n");
-        printf("4. Exit\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
+        electionManager.displayMenu();
+        cout << "Enter your choice: ";
+        cin >> choice;
         switch (choice) {
-            case 1:
-                addCandidate(candidates, &candidateCount);
+            case 1: {
+                string candidateName;
+                cout << "Enter Candidate Name: ";
+                cin >> candidateName;
+                electionManager.addCandidate(candidateName);
                 break;
-            case 2:
-                displayCandidates(candidates, candidateCount);
+            }
+            case 2: {
+                string voterName;
+                cout << "Enter Voter Name: ";
+                cin >> voterName;
+                electionManager.addVoter(voterName);
                 break;
-            case 3:
-                castVote(candidates, candidateCount);
+            }
+            case 3: {
+                string voterName, candidateName;
+                cout << "Enter Voter Name: ";
+                cin >> voterName;
+                cout << "Enter Candidate Name: ";
+                cin >> candidateName;
+                electionManager.vote(voterName, candidateName);
                 break;
+            }
             case 4:
-                printf("Exiting the system.\n");
+                electionManager.showResults();
+                break;
+            case 5:
+                cout << "Exiting...\n";
                 break;
             default:
-                printf("Invalid choice! Please try again.\n");
+                cout << "Invalid choice. Please try again.\n";
         }
-    } while (choice != 4);
-
+    } while (choice != 5);
     return 0;
-}
-
-// Function to add a candidate
-void addCandidate(Candidate candidates[], int *count) {
-    if (*count >= MAX_CANDIDATES) {
-        printf("Cannot add more candidates. Maximum limit reached.\n");
-        return;
-    }
-    
-    Candidate newCandidate;
-    newCandidate.id = *count + 1; // Assigning ID based on current count
-    printf("Enter candidate name: ");
-    getchar(); // To consume newline character left by previous scanf
-    fgets(newCandidate.name, NAME_LENGTH, stdin);
-    newCandidate.name[strcspn(newCandidate.name, "\n")] = 0; // Remove newline character
-    newCandidate.votes = 0; // Initialize votes to 0
-
-    candidates[*count] = newCandidate;
-    (*count)++;
-    printf("Candidate added successfully!\n");
-}
-
-// Function to display all candidates
-void displayCandidates(Candidate candidates[], int count) {
-    if (count == 0) {
-        printf("No candidates available.\n");
-        return;
-    }
-
-    printf("\n--- List of Candidates ---\n");
-    for (int i = 0; i < count; i++) {
-        printf("ID: %d, Name: %s, Votes: %d\n", candidates[i].id, candidates[i].name, candidates[i].votes);
-    }
-}
-
-// Function to cast a vote for a candidate
-void castVote(Candidate candidates[], int count) {
-    if (count == 0) {
-        printf("No candidates available to vote for.\n");
-        return;
-    }
-
-    int id;
-    printf("Enter the candidate ID you want to vote for: ");
-    scanf("%d", &id);
-
-    if (id < 1 || id > count) {
-        printf("Invalid candidate ID!\n");
-    } else {
-        candidates[id - 1].votes++;
-        printf("Vote casted successfully for %s!\n", candidates[id - 1].name);
-    }
 }
